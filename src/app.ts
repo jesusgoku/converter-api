@@ -2,12 +2,15 @@ import stream from 'node:stream';
 import streamPromises from 'node:stream/promises';
 import { fetchFile } from '@ffmpeg/ffmpeg';
 import express from 'express';
+import cors from 'cors';
 import multer from 'multer';
 import { v4 as uuidV4 } from 'uuid';
 import { ffmpeg } from './ffmpeg';
 
 const upload = multer({ storage: multer.memoryStorage() });
 const app = express();
+
+app.use(cors());
 
 app.post('/gif2mp4', upload.single('file'), async (req, res) => {
   const gifPattern = /\.gif$/;
