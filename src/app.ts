@@ -8,6 +8,7 @@ import multer from 'multer';
 import { v4 as uuidV4 } from 'uuid';
 import workerpool from 'workerpool';
 import { ffmpeg } from './ffmpeg';
+import { sendVideo } from './telegram';
 
 const pool = workerpool.pool(path.join(__dirname, 'worker.js'));
 const upload = multer({ storage: multer.memoryStorage() });
@@ -78,6 +79,35 @@ app.post('/gif2mp4-concurrent', upload.single('file'), async (req, res) => {
     stream.Readable.from(Buffer.from(b)), //
     res,
   );
+});
+
+app.post('/gif2mp4-send2telegram', upload.single('file'), async (req, res) => {
+  const gifPattern = /\.gif$/;
+  const fileName = req.file?.originalname as string;
+  if (!gifPattern.test(fileName)) {
+    res.sendStatus(400);
+    return;
+  }
+
+  const { chatId, caption } = req.body;
+
+  const fileBuffer = req.file?.buffer as Buffer;
+  const worker = await pool.proxy();
+  const video: Uint8Array = await worker.gif2mp4(fileBuffer);
+  const videoBuffer = Buffer.from(video);
+
+  const result = await sendVideo({
+    chatId,
+    video: videoBuffer,
+    videoName: fileName,
+    caption,
+  });
+
+  if (result.error_code) {
+    res.status(result.error_code).json(result);
+  } else {
+    res.sendStatus(204);
+  }
 });
 
 export default app;
