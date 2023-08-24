@@ -1,3 +1,9 @@
-const { PORT = 3000 } = process.env;
+const {
+  PORT = 3000, //
+  TELEGRAM_BOT_TOKEN,
+} = process.env;
 
-export { PORT };
+export {
+  PORT, //
+  TELEGRAM_BOT_TOKEN,
+};
